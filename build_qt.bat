@@ -98,24 +98,15 @@ echo.
 echo  [OK] Qt runtime deployed to build
 echo.
 
-echo  [INFO] Copying executable to root directory...
-if exist "build\OS.exe" copy /y "build\OS.exe" . >nul 2>&1
-for %%f in (d3dcompiler_47.dll libatomic-1.dll libgcc_s_seh-1.dll libgfortran-5.dll libgomp-1.dll libquadmath-0.dll libstdc++-6.dll libwinpthread-1.dll opengl32sw.dll Qt6Core.dll Qt6Gui.dll Qt6Network.dll Qt6Svg.dll Qt6Widgets.dll) do (
-    if exist "build\%%f" copy /y "build\%%f" . >nul 2>&1
-)
-for %%d in (platforms imageformats iconengines styles generic networkinformation tls) do (
-    if exist "build\%%d" xcopy /y /e /i "build\%%d" "%%d\" >nul 2>&1
-)
-echo  [OK] Runtime files copied to root directory
-echo.
-
 echo  Running File System...
 echo.
 echo.
 
 if exist "build\OS.exe" (
     set "PATH=%QT_BIN%;%MINGW_BIN%;%PATH%"
-    build\OS.exe
+    cd build
+    OS.exe
+    cd ..
 ) else (
     echo  [ERROR] Executable not found
     dir build\*.exe /s /b

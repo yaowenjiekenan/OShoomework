@@ -348,7 +348,7 @@ MainWindow::MainWindow(QWidget* parent)
     );
 
     // Initialize filesystem
-    m_diskPath = "filesystem.dat";
+    m_diskPath = "build/filesystem.dat";
     m_fileSystem = new FileSystem();
     if (!m_fileSystem->mount(m_diskPath)) {
         QMessageBox::critical(this, "Error", "Failed to mount filesystem!");

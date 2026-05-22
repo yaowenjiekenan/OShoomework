@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 
     printf("=== OS.exe Load Simulation ===\n\n");
 
-    QString diskPath = "filesystem.dat";
+    QString diskPath = "build/filesystem.dat";
     std::vector<uint8_t> disk_data(TOTAL_SIZE, 0);
     std::vector<INode> inode_table;
 

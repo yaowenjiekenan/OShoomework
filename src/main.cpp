@@ -33,7 +33,7 @@ int runCLI() {
     out << "\n";
 
     FileSystem fs;
-    if (!fs.mount("filesystem.dat")) {
+    if (!fs.mount("build/filesystem.dat")) {
         out << "[ERROR] Failed to mount filesystem!\n";
         return 1;
     }
