@@ -23,7 +23,7 @@ FORMS += \
 
 INCLUDEPATH += $$PWD/include
 
-DESTDIR = $$PWD
+DESTDIR = build
 OBJECTS_DIR = build/obj
 MOC_DIR = build/moc
 RCC_DIR = build/rcc
