@@ -1,0 +1,7 @@
+run  
+bt 30  
+quit  
+break main  
+run  
+bt  
+quit  
