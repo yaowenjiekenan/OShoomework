@@ -33,7 +33,8 @@ int runCLI() {
     out << "\n";
 
     FileSystem fs;
-    if (!fs.mount("build/filesystem.dat")) {
+    QDir appDir = QCoreApplication::applicationDirPath();
+    if (!fs.mount(appDir.filePath("filesystem.dat"))) {
         out << "[ERROR] Failed to mount filesystem!\n";
         return 1;
     }

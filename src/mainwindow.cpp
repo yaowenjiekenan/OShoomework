@@ -347,8 +347,9 @@ MainWindow::MainWindow(QWidget* parent)
         "QLabel { color: #202020; }"
     );
 
-    // Initialize filesystem
-    m_diskPath = "build/filesystem.dat";
+    // Initialize filesystem - use absolute path based on application directory
+    QDir appDir = QCoreApplication::applicationDirPath();
+    m_diskPath = appDir.filePath("filesystem.dat");
     m_fileSystem = new FileSystem();
     if (!m_fileSystem->mount(m_diskPath)) {
         QMessageBox::critical(this, "Error", "Failed to mount filesystem!");
@@ -637,6 +638,10 @@ void MainWindow::createToolBar() {
 }
 
 void MainWindow::navigateTo(const QString& path) {
+    // Clear search filter when navigating - search is view-only and shouldn't affect path logic
+    m_searchEdit->clear();
+    m_proxyModel->setFilterWildcard("");
+
     QString fullPath = path;
     if (!path.startsWith("/") && path != "/") {
         fullPath = m_currentPath == "/" ? "/" + path : m_currentPath + "/" + path;
@@ -717,9 +722,11 @@ void MainWindow::onListItemDoubleClicked(const QModelIndex& index) {
 
     if (row >= 0 && row < items.size()) {
         const auto& item = items[row];
+
         if (item.isDirectory) {
             // Construct full path
             QString fullPath = m_currentPath == "/" ? "/" + item.name : m_currentPath + "/" + item.name;
+
             navigateTo(fullPath);
         }
     }
@@ -852,6 +859,8 @@ void MainWindow::onGoBack() {
         QString path = m_history[m_historyIndex];
         m_pathEdit->setText(path);
         m_fileSystem->change_directory(path);
+        m_currentPath = path;
+        setWindowTitle("Unix File System - " + m_currentPath);
         refreshView();
     }
 }

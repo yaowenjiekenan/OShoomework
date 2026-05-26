@@ -23,11 +23,18 @@ FORMS += \
 
 INCLUDEPATH += $$PWD/include
 
-DESTDIR = build
-OBJECTS_DIR = build/obj
-MOC_DIR = build/moc
-RCC_DIR = build/rcc
-UI_DIR = build/ui
+# Build output directory
+win32 {
+    BUILD_DIR = $$PWD/build
+} else {
+    BUILD_DIR = $$PWD/build
+}
+
+DESTDIR = $$BUILD_DIR
+OBJECTS_DIR = $$BUILD_DIR/obj
+MOC_DIR = $$BUILD_DIR/moc
+RCC_DIR = $$BUILD_DIR/rcc
+UI_DIR = $$BUILD_DIR/ui
 
 # Qt6 on Windows with MinGW
 win32 {
