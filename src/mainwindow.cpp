@@ -849,10 +849,7 @@ void MainWindow::onAbout() {
 void MainWindow::onGoBack() {
     if (m_historyIndex > 0) {
         m_historyIndex--;
-        QString path = m_history[m_historyIndex];
-        m_pathEdit->setText(path);
-        m_fileSystem->change_directory(path);
-        refreshView();
+        navigateTo(m_history[m_historyIndex]);
     }
 }
 
@@ -1547,8 +1544,19 @@ void FileSystemListModel::refresh() {
         strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M", tm_info);
         item.modified = time_buf;
 
-        // Format permissions
-        item.permissions = isDir ? "drwxr-xr-x" : "-rw-r--r--";
+        // Format permissions from actual inode value
+        QString permStr;
+        permStr += isDir ? 'd' : '-';
+        permStr += (inode.permissions & 0x0100) ? 'r' : '-';
+        permStr += (inode.permissions & 0x0080) ? 'w' : '-';
+        permStr += (inode.permissions & 0x0040) ? 'x' : '-';
+        permStr += (inode.permissions & 0x0020) ? 'r' : '-';
+        permStr += (inode.permissions & 0x0010) ? 'w' : '-';
+        permStr += (inode.permissions & 0x0008) ? 'x' : '-';
+        permStr += (inode.permissions & 0x0004) ? 'r' : '-';
+        permStr += (inode.permissions & 0x0002) ? 'w' : '-';
+        permStr += (inode.permissions & 0x0001) ? 'x' : '-';
+        item.permissions = permStr;
 
         // Determine file extension and kind
         item.fileExtension = "";

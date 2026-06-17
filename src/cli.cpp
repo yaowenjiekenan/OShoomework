@@ -215,7 +215,18 @@ void CLI::handleListDir(const QStringList& args) {
         QString type = inode.file_type == FileType::DIRECTORY ? "DIR " : "FILE";
         QString size = inode.file_type == FileType::DIRECTORY ? "     -" : formatSize(inode.file_size);
         QString time = formatTime(inode.modified_time);
-        QString perms = inode.file_type == FileType::DIRECTORY ? "drwxr-xr-x" : "-rw-r--r--";
+        // Format permissions from actual inode value
+        QString perms;
+        perms += inode.file_type == FileType::DIRECTORY ? 'd' : '-';
+        perms += (inode.permissions & 0x0100) ? 'r' : '-';
+        perms += (inode.permissions & 0x0080) ? 'w' : '-';
+        perms += (inode.permissions & 0x0040) ? 'x' : '-';
+        perms += (inode.permissions & 0x0020) ? 'r' : '-';
+        perms += (inode.permissions & 0x0010) ? 'w' : '-';
+        perms += (inode.permissions & 0x0008) ? 'x' : '-';
+        perms += (inode.permissions & 0x0004) ? 'r' : '-';
+        perms += (inode.permissions & 0x0002) ? 'w' : '-';
+        perms += (inode.permissions & 0x0001) ? 'x' : '-';
 
         out << QString("  %1 %2 %3 %4\n")
                    .arg(perms, 11)

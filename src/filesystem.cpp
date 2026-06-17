@@ -433,14 +433,14 @@ bool FileSystem::initialize_fresh() {
 
     // Disk layout:
     // Block 0: Superblock
-    // Block 1: Bitmap (1 block, exactly 2048 bytes = 16384 bits for 16384 blocks)
-    // Blocks 2-2049: Inode table (2048 blocks = 16384 inodes * 128 bytes)
-    // Blocks 2050+: Data blocks
-    // Root directory data stored at data_block_start (2050)
+    // Blocks 1-2: Bitmap (2048 bytes = 16384 bits for 16384 blocks, needs 2 blocks)
+    // Blocks 3-2050: Inode table (2048 blocks = 16384 inodes * 128 bytes)
+    // Blocks 2051+: Data blocks
+    // Root directory data stored at data_block_start (2051)
 
     superblock.inode_table_blocks = (TOTAL_BLOCKS * INODE_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
     superblock.total_inodes = TOTAL_BLOCKS;
-    superblock.inode_table_start = 2;  // After superblock + bitmap
+    superblock.inode_table_start = 3;  // After superblock (0) + bitmap (1-2)
     superblock.data_block_start = superblock.inode_table_start + superblock.inode_table_blocks;
     superblock.root_inode = 0;
 
@@ -451,10 +451,11 @@ bool FileSystem::initialize_fresh() {
     bitmap.initialize();
     // Mark superblock as used
     bitmap.set_used(0);
-    // Mark bitmap block as used
+    // Mark bitmap blocks as used (blocks 1-2, 2048 bytes)
     bitmap.set_used(1);
-    // Mark inode table blocks as used
-    for (uint32_t i = 2; i < superblock.data_block_start; i++) {
+    bitmap.set_used(2);
+    // Mark inode table blocks as used (starts from block 3)
+    for (uint32_t i = 3; i < superblock.data_block_start; i++) {
         bitmap.set_used(i);
     }
 
@@ -928,18 +929,57 @@ bool FileSystem::delete_file(const QString& path) {
 }
 
 bool FileSystem::copy_file(const QString& src, const QString& dst) {
-    auto [si, _] = resolve_path(src);
-    if (si == UINT32_MAX) return false;
+    // Read source file content
+    QByteArray content;
+    if (!read_file_content(src, content)) return false;
 
-    INode& s = inode_table[si];
-    if (s.file_type != FileType::REGULAR) return false;
-
-    uint32_t skb = (s.file_size + 1023) / 1024;
+    uint32_t srcSize = content.size();
+    uint32_t skb = (srcSize + 1023) / 1024;
     if (skb == 0) skb = 1;
 
-    bool result = create_file(dst, skb);
-    if (result) emit filesystemChanged();
-    return result;
+    // Create destination file with same size (blocks allocated, filled with random data)
+    if (!create_file(dst, skb)) return false;
+
+    // Resolve destination inode to overwrite blocks with actual source content
+    auto [di, _] = resolve_path(dst);
+    if (di == UINT32_MAX) return false;
+
+    INode& dinode = inode_table[di];
+
+    uint32_t written = 0;
+    for (uint32_t i = 0; i < dinode.block_count && written < srcSize; i++) {
+        uint32_t blockNum = 0;
+
+        if (i < DIRECT_BLOCKS) {
+            blockNum = dinode.direct_blocks[i];
+        } else if (i < DIRECT_BLOCKS + POINTERS_PER_BLOCK) {
+            if (dinode.indirect_block != 0) {
+                const uint32_t* indirectPtr = (const uint32_t*)get_block_ptr(dinode.indirect_block);
+                blockNum = indirectPtr[i - DIRECT_BLOCKS];
+            }
+        } else {
+            if (dinode.double_indirect_block != 0) {
+                const uint32_t* doublePtr = (const uint32_t*)get_block_ptr(dinode.double_indirect_block);
+                uint32_t doubleIndex = (i - DIRECT_BLOCKS - POINTERS_PER_BLOCK) / POINTERS_PER_BLOCK;
+                uint32_t innerIndex = (i - DIRECT_BLOCKS - POINTERS_PER_BLOCK) % POINTERS_PER_BLOCK;
+                if (doublePtr[doubleIndex] != 0) {
+                    const uint32_t* innerPtr = (const uint32_t*)get_block_ptr(doublePtr[doubleIndex]);
+                    blockNum = innerPtr[innerIndex];
+                }
+            }
+        }
+
+        if (blockNum == 0) continue;
+
+        uint32_t bytesLeft = srcSize - written;
+        uint32_t blockSize = qMin<uint32_t>(BLOCK_SIZE, bytesLeft);
+        uint8_t* blockData = get_block_ptr(blockNum);
+        memcpy(blockData, content.constData() + written, blockSize);
+        written += blockSize;
+    }
+
+    emit filesystemChanged();
+    return true;
 }
 
 bool FileSystem::create_directory(const QString& path) {
@@ -1005,6 +1045,9 @@ bool FileSystem::delete_directory(const QString& path) {
 
     if (inode_table[in].file_type != FileType::DIRECTORY) return false;
 
+    // Prevent deleting the current working directory
+    if (in == current_inode) return false;
+
     auto entries = read_directory(in);
     std::vector<DirEntry> user_entries;
     for (const auto& e : entries) {
@@ -1033,6 +1076,9 @@ bool FileSystem::delete_directory_recursive(const QString& path) {
     if (in == UINT32_MAX) return false;
 
     if (inode_table[in].file_type != FileType::DIRECTORY) return false;
+
+    // Prevent deleting the current working directory
+    if (in == current_inode) return false;
 
     std::string dir_name = p.find_last_of('/') == std::string::npos
                            ? p : p.substr(p.find_last_of('/') + 1);

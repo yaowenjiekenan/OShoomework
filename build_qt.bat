@@ -9,8 +9,8 @@ echo  ==========================================================
 echo.
 
 REM Qt Configuration
-set QT_DIR=F:\Qt
-set QT_VERSION=6.11.1
+set QT_DIR=D:\Qt6.11
+set QT_VERSION=6.8.3
 set QT_BIN=%QT_DIR%\%QT_VERSION%\mingw_64\bin
 set QT_LIB=%QT_DIR%\%QT_VERSION%\mingw_64\lib
 set QT_INC=%QT_DIR%\%QT_VERSION%\mingw_64\include
