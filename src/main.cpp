@@ -9,9 +9,9 @@
 #include "cli.h"
 
 // Group information - please update with your actual group info
-const QString GROUP_NAME = "Group 1";
-const QString GROUP_MEMBERS = "Student Name 1 (ID: 12345678), Student Name 2 (ID: 23456789)";
-const QString GROUP_INFO = "Operating Systems Course Project - Spring 2026";
+extern const QString GROUP_NAME = "Group 1";
+extern const QString GROUP_MEMBERS = "Student Name 1 (ID: 12345678), Student Name 2 (ID: 23456789)";
+extern const QString GROUP_INFO = "Operating Systems Course Project - Spring 2026";
 
 int runCLI() {
     QTextStream out(stdout);

@@ -24,6 +24,7 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QCloseEvent>
+#include <QProgressBar>
 
 #include "filesystem.h"
 
@@ -86,6 +87,7 @@ private:
     QComboBox* m_sortCombo;
     QLabel* m_statusLabel;
     QLabel* m_itemCountLabel;
+    QProgressBar* m_diskBar;
 
     QAction* m_backAction;
     QAction* m_upAction;

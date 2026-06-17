@@ -18,6 +18,14 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QProgressBar>
+#include <QDialogButtonBox>
+#include <QSpinBox>
+
+// Group info (defined in main.cpp)
+extern const QString GROUP_NAME;
+extern const QString GROUP_MEMBERS;
+extern const QString GROUP_INFO;
 
 // Helper function to create colored folder icon
 static QIcon createFolderIcon() {
@@ -311,6 +319,372 @@ static QIcon createFileIcon() {
 }
 
 // ============================================================================
+// Helper: styled input dialog
+// ============================================================================
+static QString showStyledInputDialog(QWidget* parent, const QString& title,
+                                      const QString& label, const QString& defaultValue,
+                                      bool* ok) {
+    QDialog dialog(parent);
+    dialog.setWindowTitle(title);
+    dialog.setMinimumWidth(420);
+    dialog.setStyleSheet(
+        "QDialog { background: #f5f7fa; }"
+        "QLabel { font-size: 13px; color: #202020; padding: 8px 0; }"
+        "QLineEdit { padding: 10px 14px; border: 1px solid #c8c8c8; border-radius: 6px; "
+        "    background: white; font-size: 14px; min-height: 20px; }"
+        "QLineEdit:focus { border: 2px solid #0078d4; }"
+        "QPushButton { min-width: 90px; min-height: 34px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 6px; "
+        "    font-size: 13px; font-weight: bold; padding: 6px 20px; }"
+        "QPushButton:hover { background: #106ebe; }"
+        "QPushButton:pressed { background: #005a9e; }"
+        "QPushButton#cancelBtn { background: #e0e0e0; color: #404040; }"
+        "QPushButton#cancelBtn:hover { background: #d0d0d0; }"
+    );
+
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(24, 20, 24, 16);
+    layout->setSpacing(14);
+
+    QLabel* promptLabel = new QLabel(label, &dialog);
+    promptLabel->setWordWrap(true);
+    layout->addWidget(promptLabel);
+
+    QLineEdit* input = new QLineEdit(defaultValue, &dialog);
+    input->selectAll();
+    layout->addWidget(input);
+
+    QHBoxLayout* btnLayout = new QHBoxLayout();
+    btnLayout->addStretch();
+    QPushButton* cancelBtn = new QPushButton("Cancel", &dialog);
+    cancelBtn->setObjectName("cancelBtn");
+    QPushButton* okBtn = new QPushButton("OK", &dialog);
+    btnLayout->addWidget(cancelBtn);
+    btnLayout->addWidget(okBtn);
+    layout->addLayout(btnLayout);
+
+    QObject::connect(okBtn, &QPushButton::clicked, [&]() {
+        *ok = true;
+        dialog.accept();
+    });
+    QObject::connect(cancelBtn, &QPushButton::clicked, [&]() {
+        *ok = false;
+        dialog.reject();
+    });
+
+    dialog.exec();
+    return input->text();
+}
+
+static int showStyledIntDialog(QWidget* parent, const QString& title,
+                                const QString& label, int defaultValue,
+                                int min, int max, int step, bool* ok) {
+    QDialog dialog(parent);
+    dialog.setWindowTitle(title);
+    dialog.setMinimumWidth(400);
+    dialog.setStyleSheet(
+        "QDialog { background: #f5f7fa; }"
+        "QLabel { font-size: 13px; color: #202020; padding: 8px 0; }"
+        "QSpinBox { padding: 10px 14px; border: 1px solid #c8c8c8; border-radius: 6px; "
+        "    background: white; font-size: 14px; min-height: 20px; }"
+        "QSpinBox:focus { border: 2px solid #0078d4; }"
+        "QPushButton { min-width: 90px; min-height: 34px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 6px; "
+        "    font-size: 13px; font-weight: bold; padding: 6px 20px; }"
+        "QPushButton:hover { background: #106ebe; }"
+        "QPushButton#cancelBtn { background: #e0e0e0; color: #404040; }"
+        "QPushButton#cancelBtn:hover { background: #d0d0d0; }"
+    );
+
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(24, 20, 24, 16);
+    layout->setSpacing(14);
+
+    QLabel* promptLabel = new QLabel(label, &dialog);
+    promptLabel->setWordWrap(true);
+    layout->addWidget(promptLabel);
+
+    QSpinBox* spinBox = new QSpinBox(&dialog);
+    spinBox->setRange(min, max);
+    spinBox->setValue(defaultValue);
+    spinBox->setSingleStep(step);
+    layout->addWidget(spinBox);
+
+    QHBoxLayout* btnLayout = new QHBoxLayout();
+    btnLayout->addStretch();
+    QPushButton* cancelBtn = new QPushButton("Cancel", &dialog);
+    cancelBtn->setObjectName("cancelBtn");
+    QPushButton* okBtn = new QPushButton("OK", &dialog);
+    btnLayout->addWidget(cancelBtn);
+    btnLayout->addWidget(okBtn);
+    layout->addLayout(btnLayout);
+
+    QObject::connect(okBtn, &QPushButton::clicked, [&]() {
+        *ok = true;
+        dialog.accept();
+    });
+    QObject::connect(cancelBtn, &QPushButton::clicked, [&]() {
+        *ok = false;
+        dialog.reject();
+    });
+
+    dialog.exec();
+    return spinBox->value();
+}
+
+// ============================================================================
+// Toolbar / Action Icons (custom-drawn for Windows compatibility)
+// ============================================================================
+static QIcon createBackIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(80, 80, 80), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.setBrush(Qt::NoBrush);
+    p.drawLine(20, 8, 10, 16);
+    p.drawLine(20, 24, 10, 16);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createUpIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(80, 80, 80), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.setBrush(Qt::NoBrush);
+    p.drawLine(8, 20, 16, 10);
+    p.drawLine(24, 20, 16, 10);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createRefreshIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(80, 80, 80), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.setBrush(Qt::NoBrush);
+    QRectF rect(7, 7, 18, 18);
+    int startAngle = 45 * 16;
+    int spanAngle  = 270 * 16;
+    p.drawArc(rect, startAngle, spanAngle);
+    p.drawLine(24, 10, 20, 14);
+    p.drawLine(24, 10, 22, 6);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createNewFolderIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    QPainterPath body;
+    body.moveTo(2, 10);
+    body.lineTo(2, 26);
+    body.lineTo(30, 26);
+    body.lineTo(30, 10);
+    body.lineTo(10, 10);
+    body.lineTo(8, 7);
+    body.lineTo(4, 7);
+    body.lineTo(4, 10);
+    body.closeSubpath();
+    p.fillPath(body, QColor(255, 193, 7));
+    p.setPen(QPen(QColor(200, 150, 0), 1));
+    p.drawPath(body);
+    p.setPen(QPen(QColor(0, 150, 0), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(12, 17, 20, 17);
+    p.drawLine(16, 13, 16, 21);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createNewFileIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    QPainterPath doc;
+    doc.moveTo(6, 4);
+    doc.lineTo(20, 4);
+    doc.lineTo(26, 10);
+    doc.lineTo(26, 28);
+    doc.lineTo(6, 28);
+    doc.closeSubpath();
+    p.fillPath(doc, Qt::white);
+    p.setPen(QPen(Qt::gray, 1));
+    p.drawPath(doc);
+    QPainterPath corner;
+    corner.moveTo(20, 4);
+    corner.lineTo(20, 10);
+    corner.lineTo(26, 10);
+    corner.closeSubpath();
+    p.fillPath(corner, QColor(220, 220, 220));
+    p.setPen(QPen(QColor(0, 150, 0), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(11, 18, 17, 18);
+    p.drawLine(14, 15, 14, 21);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createDeleteIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    QPainterPath can;
+    can.moveTo(8, 10);
+    can.lineTo(8, 28);
+    can.lineTo(24, 28);
+    can.lineTo(24, 10);
+    can.closeSubpath();
+    p.fillPath(can, QColor(200, 200, 210));
+    p.setPen(QPen(QColor(140, 140, 150), 1));
+    p.drawPath(can);
+    p.setPen(QPen(QColor(140, 140, 150), 2));
+    p.drawLine(6, 10, 26, 10);
+    p.drawLine(13, 10, 13, 6);
+    p.drawLine(19, 10, 19, 6);
+    p.drawLine(13, 6, 19, 6);
+    p.setPen(QPen(QColor(160, 160, 170), 1.2));
+    p.drawLine(12, 14, 12, 24);
+    p.drawLine(16, 14, 16, 24);
+    p.drawLine(20, 14, 20, 24);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createCopyIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    QPainterPath back;
+    back.moveTo(10, 6);
+    back.lineTo(22, 6);
+    back.lineTo(27, 11);
+    back.lineTo(27, 28);
+    back.lineTo(10, 28);
+    back.closeSubpath();
+    p.fillPath(back, QColor(220, 220, 225));
+    p.setPen(QPen(QColor(160, 160, 160), 1));
+    p.drawPath(back);
+    QPainterPath front;
+    front.moveTo(6, 9);
+    front.lineTo(18, 9);
+    front.lineTo(23, 14);
+    front.lineTo(23, 31);
+    front.lineTo(6, 31);
+    front.closeSubpath();
+    p.fillPath(front, Qt::white);
+    p.setPen(QPen(Qt::gray, 1));
+    p.drawPath(front);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createOpenIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(80, 80, 80), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.setBrush(Qt::NoBrush);
+    p.drawEllipse(QRectF(7, 7, 16, 16));
+    p.drawLine(21, 21, 28, 28);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createPropertiesIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(80, 80, 80), 2));
+    p.setBrush(Qt::NoBrush);
+    p.drawEllipse(QRectF(6, 6, 20, 20));
+    p.setPen(QPen(QColor(80, 80, 80), 3, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(16, 11, 16, 12);
+    p.drawLine(16, 15, 16, 22);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createRenameIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    // Pen/pencil shape
+    p.setPen(QPen(QColor(80, 80, 80), 2, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(8, 24, 14, 18);
+    p.drawLine(14, 18, 22, 10);
+    p.drawLine(22, 10, 24, 12);
+    p.drawLine(24, 12, 18, 18);
+    p.drawLine(18, 18, 24, 24);
+    p.setPen(QPen(QColor(80, 80, 80), 2.5, Qt::SolidLine, Qt::SquareCap));
+    p.drawLine(9, 23, 22, 10);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createPermissionsIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    // Shield shape
+    QPainterPath shield;
+    shield.moveTo(16, 3);
+    shield.lineTo(8, 7);
+    shield.lineTo(8, 16);
+    shield.cubicTo(8, 23, 13, 27, 16, 29);
+    shield.cubicTo(19, 27, 24, 23, 24, 16);
+    shield.lineTo(24, 7);
+    shield.closeSubpath();
+    p.fillPath(shield, QColor(200, 200, 210));
+    p.setPen(QPen(QColor(140, 140, 150), 1));
+    p.drawPath(shield);
+    // Checkmark inside
+    p.setPen(QPen(QColor(0, 130, 0), 2.5, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(11, 16, 15, 20);
+    p.drawLine(15, 20, 21, 12);
+    p.end();
+    return QIcon(pix);
+}
+
+static QIcon createStorageIcon() {
+    QPixmap pix(32, 32);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
+    // Disk/drive shape
+    QPainterPath disk;
+    disk.addEllipse(QRectF(4, 4, 24, 24));
+    p.fillPath(disk, QColor(220, 220, 225));
+    p.setPen(QPen(QColor(140, 140, 150), 1.5));
+    p.drawEllipse(QRectF(4, 4, 24, 24));
+    // Inner circle
+    p.drawEllipse(QRectF(12, 12, 8, 8));
+    // Pie slices for usage indication
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor(100, 149, 237));
+    p.drawPie(QRectF(6, 6, 20, 20), 90 * 16, 90 * 16);
+    p.drawPie(QRectF(6, 6, 20, 20), 270 * 16, 60 * 16);
+    // Inner white
+    p.setBrush(Qt::white);
+    p.setPen(QPen(QColor(140, 140, 150), 1));
+    p.drawEllipse(QRectF(13, 13, 6, 6));
+    p.end();
+    return QIcon(pix);
+}
+
+// ============================================================================
 // MainWindow Implementation
 // ============================================================================
 MainWindow::MainWindow(QWidget* parent)
@@ -326,6 +700,7 @@ MainWindow::MainWindow(QWidget* parent)
     , m_sortCombo(nullptr)
     , m_statusLabel(nullptr)
     , m_itemCountLabel(nullptr)
+    , m_diskBar(nullptr)
     , m_historyIndex(-1)
 {
     setWindowTitle("Unix File System Explorer - Qt Version");
@@ -339,13 +714,39 @@ MainWindow::MainWindow(QWidget* parent)
         "QLineEdit { padding: 6px 10px; border: 1px solid #c8c8c8; border-radius: 4px; background: white; }"
         "QLineEdit:focus { border: 1px solid #0078d4; }"
         "QTreeView { background: white; border: 1px solid #e0e0e0; border-radius: 4px; }"
-        "QTableView { background: white; border: 1px solid #e0e0e0; border-radius: 4px; }"
+        "QTreeView::item:hover { background: #e6f0fa; }"
+        "QTreeView::item:selected { background: #c8dcf0; color: #202020; }"
+        "QTableView { background: white; border: 1px solid #e0e0e0; border-radius: 4px; "
+        "    alternate-background-color: #f7f9fc; }"
         "QTableView::item:hover { background: #e6f0fa; }"
-        "QTableView::item:selected { background: #c8dcf0; }"
+        "QTableView::item:selected { background: #c8dcf0; color: #202020; }"
         "QHeaderView::section { background: #f8f8f8; padding: 8px; border: none; border-bottom: 1px solid #e0e0e0; }"
         "QStatusBar { background: white; border-top: 1px solid #e0e0e0; }"
         "QLabel { color: #202020; }"
     );
+
+    // Global dialog styling
+    qApp->setStyleSheet(qApp->styleSheet() + QString(
+        "QDialog { background: #f5f7fa; }"
+        "QMessageBox { background: #f5f7fa; }"
+        "QMessageBox QLabel { color: #202020; font-size: 13px; }"
+        "QMessageBox QPushButton { min-width: 80px; min-height: 28px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 4px; padding: 6px 16px; }"
+        "QMessageBox QPushButton:hover { background: #106ebe; }"
+        "QMessageBox QPushButton:pressed { background: #005a9e; }"
+        "QInputDialog { background: #f5f7fa; }"
+        "QInputDialog QLabel { font-size: 13px; color: #202020; }"
+        "QInputDialog QLineEdit { padding: 8px 12px; border: 1px solid #c8c8c8; border-radius: 4px; "
+        "    background: white; font-size: 13px; }"
+        "QInputDialog QLineEdit:focus { border: 1px solid #0078d4; }"
+        "QInputDialog QPushButton { min-width: 80px; min-height: 28px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 4px; padding: 6px 16px; }"
+        "QInputDialog QPushButton:hover { background: #106ebe; }"
+        "QGroupBox { font-weight: bold; color: #202020; border: 1px solid #d0d0d0; "
+        "    border-radius: 6px; margin-top: 8px; padding-top: 12px; background: white; }"
+        "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; }"
+        "QCheckBox { color: #202020; spacing: 6px; }"
+    ));
 
     // Initialize filesystem
     m_diskPath = "filesystem.dat";
@@ -463,6 +864,7 @@ void MainWindow::setupUi() {
     m_listView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_listView->setShowGrid(false);
+    m_listView->setAlternatingRowColors(true);
     m_listView->verticalHeader()->setVisible(false);
     m_listView->horizontalHeader()->setStretchLastSection(true);
     m_listView->setColumnWidth(0, 300);
@@ -475,6 +877,12 @@ void MainWindow::setupUi() {
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_listView, &QTableView::customContextMenuRequested, this, [this](const QPoint& pos) {
         QMenu contextMenu(this);
+        contextMenu.setStyleSheet(
+            "QMenu { background: white; border: 1px solid #d0d0d0; border-radius: 6px; padding: 4px; }"
+            "QMenu::item { padding: 8px 32px 8px 12px; border-radius: 4px; }"
+            "QMenu::item:selected { background: #e6f0fa; }"
+            "QMenu::separator { height: 1px; background: #e0e0e0; margin: 4px 8px; }"
+        );
         contextMenu.addAction(m_newFileAction);
         contextMenu.addAction(m_newFolderAction);
         contextMenu.addSeparator();
@@ -504,7 +912,21 @@ void MainWindow::setupUi() {
     m_itemCountLabel = new QLabel("0 items", this);
     m_statusLabel = new QLabel("Ready", this);
 
+    // Disk usage progress bar
+    m_diskBar = new QProgressBar(this);
+    m_diskBar->setMinimumWidth(180);
+    m_diskBar->setMaximumWidth(250);
+    m_diskBar->setRange(0, 100);
+    m_diskBar->setValue(0);
+    m_diskBar->setTextVisible(true);
+    m_diskBar->setFormat("Disk: %p%");
+    m_diskBar->setStyleSheet(
+        "QProgressBar { border: 1px solid #d0d0d0; border-radius: 4px; background: #e8e8e8; height: 18px; text-align: center; }"
+        "QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #4caf50, stop:0.7 #ff9800, stop:1 #f44336); border-radius: 3px; }"
+    );
+
     statusLayout->addWidget(m_itemCountLabel);
+    statusLayout->addWidget(m_diskBar);
     statusLayout->addStretch();
     statusLayout->addWidget(m_statusLabel);
 
@@ -521,62 +943,77 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::createActions() {
-    m_backAction = new QAction(QIcon::fromTheme("go-previous"), "Back", this);
+    m_backAction = new QAction(createBackIcon(), "Back", this);
     m_backAction->setShortcut(QKeySequence::Back);
     connect(m_backAction, &QAction::triggered, this, &MainWindow::onGoBack);
 
-    m_upAction = new QAction(QIcon::fromTheme("go-up"), "Up", this);
+    m_upAction = new QAction(createUpIcon(), "Up", this);
     m_upAction->setShortcut(Qt::Key_Backspace);
     connect(m_upAction, &QAction::triggered, this, &MainWindow::onGoUp);
 
-    m_refreshAction = new QAction(QIcon::fromTheme("view-refresh"), "Refresh", this);
+    m_refreshAction = new QAction(createRefreshIcon(), "Refresh", this);
     m_refreshAction->setShortcut(QKeySequence::Refresh);
     connect(m_refreshAction, &QAction::triggered, this, &MainWindow::onRefresh);
 
-    m_newFolderAction = new QAction(QIcon::fromTheme("folder-new"), "New Folder", this);
+    m_newFolderAction = new QAction(createNewFolderIcon(), "New Folder", this);
     m_newFolderAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_N);
     connect(m_newFolderAction, &QAction::triggered, this, &MainWindow::onNewFolder);
 
-    m_newFileAction = new QAction(QIcon::fromTheme("document-new"), "New File", this);
+    m_newFileAction = new QAction(createNewFileIcon(), "New File", this);
     m_newFileAction->setShortcut(Qt::CTRL | Qt::Key_N);
     connect(m_newFileAction, &QAction::triggered, this, &MainWindow::onNewFile);
 
-    m_deleteAction = new QAction(QIcon::fromTheme("edit-delete"), "Delete", this);
+    m_deleteAction = new QAction(createDeleteIcon(), "Delete", this);
     m_deleteAction->setShortcut(QKeySequence::Delete);
     m_deleteAction->setEnabled(false);
     connect(m_deleteAction, &QAction::triggered, this, &MainWindow::onDelete);
 
-    m_copyAction = new QAction(QIcon::fromTheme("edit-copy"), "Copy", this);
+    m_copyAction = new QAction(createCopyIcon(), "Copy", this);
     m_copyAction->setShortcut(Qt::CTRL | Qt::Key_C);
     m_copyAction->setEnabled(false);
     connect(m_copyAction, &QAction::triggered, this, &MainWindow::onCopy);
 
-    m_moveAction = new QAction(QIcon::fromTheme("transform-move"), "Move", this);
+    m_moveAction = new QAction(createCopyIcon(), "Move", this);
     m_moveAction->setShortcut(Qt::CTRL | Qt::Key_X);
     m_moveAction->setEnabled(false);
     connect(m_moveAction, &QAction::triggered, this, &MainWindow::onMove);
 
-    m_renameAction = new QAction("Rename", this);
+    m_renameAction = new QAction(createRenameIcon(), "Rename", this);
     m_renameAction->setShortcut(Qt::Key_F2);
     m_renameAction->setEnabled(false);
     connect(m_renameAction, &QAction::triggered, this, &MainWindow::onRename);
 
-    m_viewContentAction = new QAction(QIcon::fromTheme("document-open"), "View Content", this);
+    m_viewContentAction = new QAction(createOpenIcon(), "View Content", this);
     m_viewContentAction->setShortcut(Qt::CTRL | Qt::Key_O);
     m_viewContentAction->setEnabled(false);
     connect(m_viewContentAction, &QAction::triggered, this, &MainWindow::onViewContent);
 
-    m_permissionsAction = new QAction("Permissions", this);
+    m_permissionsAction = new QAction(createPermissionsIcon(), "Permissions", this);
     m_permissionsAction->setEnabled(false);
     connect(m_permissionsAction, &QAction::triggered, this, &MainWindow::onChangePermissions);
 
-    m_propertiesAction = new QAction("Properties", this);
+    m_propertiesAction = new QAction(createPropertiesIcon(), "Properties", this);
     m_propertiesAction->setShortcut(Qt::ALT | Qt::Key_Return);
     m_propertiesAction->setEnabled(false);
     connect(m_propertiesAction, &QAction::triggered, this, &MainWindow::onShowProperties);
 
-    m_storageAction = new QAction("Storage Info", this);
+    m_storageAction = new QAction(createStorageIcon(), "Storage Info", this);
     connect(m_storageAction, &QAction::triggered, this, &MainWindow::onShowStorage);
+
+    // Tooltips with shortcuts
+    m_backAction->setToolTip("Back (Alt+Left)");
+    m_upAction->setToolTip("Up to Parent Directory (Backspace)");
+    m_refreshAction->setToolTip("Refresh View (F5)");
+    m_newFolderAction->setToolTip("New Folder (Ctrl+Shift+N)");
+    m_newFileAction->setToolTip("New File (Ctrl+N)");
+    m_deleteAction->setToolTip("Delete Selected Item (Del)");
+    m_copyAction->setToolTip("Copy Selected Item (Ctrl+C)");
+    m_moveAction->setToolTip("Move Selected Item (Ctrl+X)");
+    m_renameAction->setToolTip("Rename Selected Item (F2)");
+    m_viewContentAction->setToolTip("View File Content (Ctrl+O)");
+    m_permissionsAction->setToolTip("Change File/Directory Permissions");
+    m_propertiesAction->setToolTip("View Item Properties (Alt+Enter)");
+    m_storageAction->setToolTip("View Disk Storage Usage");
 }
 
 void MainWindow::createMenus() {
@@ -687,7 +1124,11 @@ void MainWindow::updateStatusBar() {
     m_itemCountLabel->setText(QString("%1 items (%2 files, %3 folders)").arg(total).arg(files).arg(folders));
 
     uint32_t freeBlocks = m_fileSystem->get_bitmap()->get_free_count();
-    m_statusLabel->setText(QString("%1 blocks free").arg(freeBlocks));
+    uint32_t totalBlocks = TOTAL_BLOCKS;
+    uint32_t usedBlocks = m_fileSystem->get_bitmap()->get_used_count();
+    int usedPct = (int)(100.0 * usedBlocks / totalBlocks);
+    m_diskBar->setValue(usedPct);
+    m_statusLabel->setText(QString("%1 / %2 blocks free (%3% used)").arg(freeBlocks).arg(totalBlocks).arg(usedPct));
 
     statusBar()->showMessage(QString("Current: %1").arg(m_currentPath));
 }
@@ -732,8 +1173,7 @@ void MainWindow::onPathReturnPressed() {
 
 void MainWindow::onNewFolder() {
     bool ok;
-    QString name = QInputDialog::getText(this, "New Folder", "Enter folder name:",
-                                         QLineEdit::Normal, "New Folder", &ok);
+    QString name = showStyledInputDialog(this, "New Folder", "Enter folder name:", "New Folder", &ok);
     if (ok && !name.isEmpty()) {
         QString fullPath = m_currentPath == "/" ? "/" + name : m_currentPath + "/" + name;
         if (!m_fileSystem->create_directory(fullPath)) {
@@ -744,17 +1184,14 @@ void MainWindow::onNewFolder() {
 
 void MainWindow::onNewFile() {
     bool ok;
-    QString name = QInputDialog::getText(this, "New File", "Enter file name:",
-                                          QLineEdit::Normal, "NewFile.txt", &ok);
+    QString name = showStyledInputDialog(this, "New File", "Enter file name:", "NewFile.txt", &ok);
     if (ok && !name.isEmpty()) {
         QString fullPath = m_currentPath == "/" ? "/" + name : m_currentPath + "/" + name;
         bool sizeOk;
-
-        // Max size with double indirect: 10 + 256 + 65536 = 65802 KB = 64.26 MB
         int maxSize = DIRECT_BLOCKS + POINTERS_PER_BLOCK + POINTERS_PER_BLOCK * POINTERS_PER_BLOCK;
-        int size = QInputDialog::getInt(this, "File Size",
-                                        QString("Enter file size (KB):\nMax size: %1 KB (%2 MB)").arg(maxSize).arg(maxSize/1024),
-                                        1, 1, maxSize, 1, &sizeOk);
+        int size = showStyledIntDialog(this, "File Size",
+            QString("Enter file size in KB (max %1 KB = %2 MB):").arg(maxSize).arg(maxSize / 1024),
+            1, 1, maxSize, 1, &sizeOk);
         if (sizeOk) {
             if (!m_fileSystem->create_file(fullPath, size)) {
                 QMessageBox::warning(this, "Error", "Failed to create file!");
@@ -836,13 +1273,18 @@ void MainWindow::onAbout() {
     QMessageBox::about(this, "About",
         "<h3>Unix File System Explorer</h3>"
         "<p>Version 2.0 - Qt Version</p>"
+        "<hr>"
+        "<p><b>" + GROUP_INFO + "</b></p>"
+        "<p><b>Group:</b> " + GROUP_NAME + "</p>"
+        "<p><b>Members:</b> " + GROUP_MEMBERS + "</p>"
+        "<hr>"
         "<p>A Qt-based implementation of a Unix-style file system with i-node structure.</p>"
         "<p>Features:</p>"
         "<ul>"
         "<li>16 MB virtual disk</li>"
-        "<li>10 direct + 1 indirect block pointers</li>"
+        "<li>10 direct + 1 single + 1 double indirect block pointers</li>"
         "<li>128-byte i-nodes</li>"
-        "<li>Modern Fluent Design UI</li>"
+        "<li>Modern UI with custom icons</li>"
         "</ul>");
 }
 
@@ -903,8 +1345,8 @@ void MainWindow::onRename() {
     FileSystemListItem item = m_listModel->getItems().at(index.row());
 
     bool ok;
-    QString newName = QInputDialog::getText(this, "Rename",
-        "Enter new name:", QLineEdit::Normal, item.name, &ok);
+    QString newName = showStyledInputDialog(this, "Rename",
+        "Enter new name:", item.name, &ok);
 
     if (ok && !newName.isEmpty() && newName != item.name) {
         // Validate filename
@@ -936,9 +1378,9 @@ void MainWindow::onCopy() {
     QString srcPath = m_currentPath == "/" ? "/" + item.name : m_currentPath + "/" + item.name;
 
     bool ok;
-    QString dstName = QInputDialog::getText(this, "Copy",
-        "Enter destination name:", QLineEdit::Normal,
-        item.isDirectory ? item.name + "_copy" : item.name + ".copy", &ok);
+    QString defaultCopyName = item.isDirectory ? item.name + "_copy" : item.name + ".copy";
+    QString dstName = showStyledInputDialog(this, "Copy",
+        "Enter destination name:", defaultCopyName, &ok);
 
     if (!ok || dstName.isEmpty()) return;
 
@@ -1042,8 +1484,8 @@ void MainWindow::onMove() {
     QString srcPath = m_currentPath == "/" ? "/" + item.name : m_currentPath + "/" + item.name;
 
     bool ok;
-    QString dstName = QInputDialog::getText(this, "Move",
-        "Enter destination path:", QLineEdit::Normal, item.name, &ok);
+    QString dstName = showStyledInputDialog(this, "Move",
+        "Enter destination path:", item.name, &ok);
 
     if (!ok || dstName.isEmpty()) return;
 
@@ -1096,9 +1538,21 @@ void MainWindow::onViewContent() {
     // Create a dialog to display the content
     QDialog* dialog = new QDialog(this);
     dialog->setWindowTitle("View: " + item.name);
-    dialog->setMinimumSize(600, 400);
+    dialog->setMinimumSize(680, 480);
+    dialog->setStyleSheet(
+        "QDialog { background: #f5f7fa; }"
+        "QLabel { font-size: 13px; color: #404040; padding: 4px 0; }"
+        "QTextEdit { background: white; border: 1px solid #d0d0d0; border-radius: 6px; "
+        "    padding: 10px; font-family: 'Courier New', monospace; font-size: 12px; }"
+        "QPushButton { min-width: 90px; min-height: 34px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 6px; "
+        "    font-size: 13px; font-weight: bold; padding: 6px 20px; }"
+        "QPushButton:hover { background: #106ebe; }"
+    );
 
     QVBoxLayout* layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(20, 16, 20, 16);
+    layout->setSpacing(12);
 
     QLabel* infoLabel = new QLabel(QString("Path: %1\nSize: %2").arg(fullPath).arg(formatSize(item.size)), dialog);
     layout->addWidget(infoLabel);
@@ -1143,9 +1597,25 @@ void MainWindow::onChangePermissions() {
     // Create permissions dialog
     QDialog* dialog = new QDialog(this);
     dialog->setWindowTitle("Change Permissions: " + item.name);
-    dialog->setMinimumWidth(350);
+    dialog->setMinimumWidth(420);
+    dialog->setStyleSheet(
+        "QDialog { background: #f5f7fa; }"
+        "QLabel { font-size: 13px; color: #202020; padding: 4px 0; }"
+        "QGroupBox { font-weight: bold; color: #202020; border: 1px solid #d0d0d0; "
+        "    border-radius: 6px; margin-top: 10px; padding-top: 14px; background: white; }"
+        "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; }"
+        "QCheckBox { color: #202020; spacing: 6px; font-size: 13px; }"
+        "QPushButton { min-width: 80px; min-height: 32px; "
+        "    background: #0078d4; color: white; border: none; border-radius: 6px; "
+        "    font-size: 13px; font-weight: bold; padding: 6px 16px; }"
+        "QPushButton:hover { background: #106ebe; }"
+        "QPushButton#cancelBtn { background: #e0e0e0; color: #404040; }"
+        "QPushButton#cancelBtn:hover { background: #d0d0d0; }"
+    );
 
     QVBoxLayout* layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(24, 20, 24, 16);
+    layout->setSpacing(12);
 
     layout->addWidget(new QLabel("Select permissions:", dialog));
 
@@ -1232,6 +1702,7 @@ void MainWindow::onChangePermissions() {
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     QPushButton* okButton = new QPushButton("OK", dialog);
     QPushButton* cancelButton = new QPushButton("Cancel", dialog);
+    cancelButton->setObjectName("cancelBtn");
     buttonLayout->addStretch();
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
