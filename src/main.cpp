@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (useCli) {
+        QCoreApplication app(argc, argv);
         return runCLI();
     } else {
         QApplication app(argc, argv);
