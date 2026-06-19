@@ -1162,6 +1162,9 @@ void MainWindow::onListItemDoubleClicked(const QModelIndex& index) {
             // Construct full path
             QString fullPath = m_currentPath == "/" ? "/" + item.name : m_currentPath + "/" + item.name;
             navigateTo(fullPath);
+        } else {
+            // Double-click on file: show content
+            onViewContent();
         }
     }
 }

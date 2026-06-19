@@ -4,14 +4,21 @@
 #include <QStyleFactory>
 #include <iostream>
 #include <string>
+#ifdef _WIN32
+extern "C" {
+__declspec(dllimport) int __stdcall SetConsoleOutputCP(unsigned int);
+__declspec(dllimport) int __stdcall SetConsoleCP(unsigned int);
+}
+#define CP_UTF8 65001
+#endif
 #include "mainwindow.h"
 #include "filesystem.h"
 #include "cli.h"
 
 // Group information - please update with your actual group info
-extern const QString GROUP_NAME = "Group 1";
-extern const QString GROUP_MEMBERS = "Student Name 1 (ID: 12345678), Student Name 2 (ID: 23456789)";
-extern const QString GROUP_INFO = "Operating Systems Course Project - Spring 2026";
+extern const QString GROUP_NAME = "Group 8";
+extern const QString GROUP_MEMBERS = "姚文杰 (202330351861), 郑崇 (202330452371), 朱文轩 (202330453241)";
+extern const QString GROUP_INFO = "Operating Systems Course Project - Summer 2026";
 
 int runCLI() {
     QTextStream out(stdout);
@@ -20,11 +27,11 @@ int runCLI() {
     out << "\n";
     out << "==================================================\n";
     out << "   Welcome to Unix-Style File System\n";
-    out << "   " << qPrintable(GROUP_INFO) << "\n";
+    out << "   " << GROUP_INFO << "\n";
     out << "==================================================\n";
     out << "\n";
-    out << "   " << qPrintable(GROUP_NAME) << "\n";
-    out << "   " << qPrintable(GROUP_MEMBERS) << "\n";
+    out << "   " << GROUP_NAME << "\n";
+    out << "   " << GROUP_MEMBERS << "\n";
     out << "\n";
     out << "--------------------------------------------------\n";
     out << "   Type 'help' for available commands\n";

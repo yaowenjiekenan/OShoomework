@@ -33,6 +33,7 @@ UI_DIR = build/ui
 win32 {
     INCLUDEPATH += $$PWD
     LIBS += -lwinmm -lcomdlg32 -lole32 -luuid
+    QMAKE_CXXFLAGS += -finput-charset=UTF-8 -fexec-charset=UTF-8
 }
 
 !win32 {
