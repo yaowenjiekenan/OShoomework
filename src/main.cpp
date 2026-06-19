@@ -8,8 +8,13 @@
 extern "C" {
 __declspec(dllimport) int __stdcall SetConsoleOutputCP(unsigned int);
 __declspec(dllimport) int __stdcall SetConsoleCP(unsigned int);
+__declspec(dllimport) void* __stdcall GetStdHandle(unsigned long);
+__declspec(dllimport) int __stdcall GetConsoleMode(void*, unsigned long*);
+__declspec(dllimport) int __stdcall SetConsoleMode(void*, unsigned long);
 }
 #define CP_UTF8 65001
+#define WIN_STD_OUTPUT_HANDLE ((unsigned long)-11)
+#define WIN_ENABLE_VTP 0x0004
 #endif
 #include "mainwindow.h"
 #include "filesystem.h"
@@ -24,30 +29,28 @@ int runCLI() {
     QTextStream out(stdout);
     QTextStream in(stdin);
 
+    // Colorful welcome banner (soft colors)
     out << "\n";
-    out << "==================================================\n";
-    out << "   Welcome to Unix-Style File System\n";
-    out << "   " << GROUP_INFO << "\n";
-    out << "==================================================\n";
-    out << "\n";
-    out << "   " << GROUP_NAME << "\n";
-    out << "   " << GROUP_MEMBERS << "\n";
-    out << "\n";
-    out << "--------------------------------------------------\n";
-    out << "   Type 'help' for available commands\n";
-    out << "   Type 'exit' to quit\n";
-    out << "--------------------------------------------------\n";
+    out << "\033[90m  ════════════════════════════════════════════════════════════════════════\033[0m\n";
+    out << "    \033[37mUnix-Style File System\033[0m  \033[90mv2.0\033[0m\n";
+    out << "    \033[90m" << GROUP_INFO << "\033[0m\n";
+    out << "\033[90m  ────────────────────────────────────────────────────────────────────────\033[0m\n";
+    out << "    \033[34m" << GROUP_NAME << "\033[0m\n";
+    out << "    \033[36m" << GROUP_MEMBERS << "\033[0m\n";
+    out << "\033[90m  ────────────────────────────────────────────────────────────────────────\033[0m\n";
+    out << "    Type '\033[33mhelp\033[0m' for commands, '\033[33mexit\033[0m' to quit\n";
+    out << "\033[90m  ════════════════════════════════════════════════════════════════════════\033[0m\n";
     out << "\n";
 
     FileSystem fs;
     if (!fs.mount("filesystem.dat")) {
-        out << "[ERROR] Failed to mount filesystem!\n";
+        out << "\033[1;31m[ERROR]\033[0m Failed to mount filesystem!\n";
         return 1;
     }
 
     CLI cli(&fs);
 
-    out << fs.get_current_path() << " $ ";
+    out << "\033[34m" << fs.get_current_path() << "\033[0m \033[33m$\033[0m ";
     out.flush();
 
     QString line;
@@ -60,7 +63,7 @@ int runCLI() {
 
         QString trimmed = line.trimmed();
         if (trimmed.isEmpty()) {
-            out << fs.get_current_path() << " $ ";
+            out << "\033[34m" << fs.get_current_path() << "\033[0m \033[33m$\033[0m ";
             out.flush();
             continue;
         }
@@ -68,9 +71,9 @@ int runCLI() {
         QString cmd = trimmed.toLower();
 
         if (cmd == "exit" || cmd == "quit" || cmd == "q") {
-            out << "\nSaving filesystem and exiting...\n";
+            out << "\n\033[33mSaving filesystem and exiting...\033[0m\n";
             fs.unmount();
-            out << "Goodbye!\n";
+            out << "\033[1;32mGoodbye!\033[0m\n";
             break;
         } else if (cmd == "help" || cmd == "?") {
             cli.printHelp();
@@ -79,7 +82,7 @@ int runCLI() {
         } else if (cmd == "sum" || cmd == "df") {
             cli.handleSum();
         } else if (cmd == "pwd") {
-            out << fs.get_current_path() << "\n";
+            out << "\033[34m" << fs.get_current_path() << "\033[0m\n";
         } else if (cmd == "clear" || cmd == "cls") {
             out << "\n";
         } else if (cmd.startsWith("createfile ") || cmd.startsWith("create ")) {
@@ -133,11 +136,11 @@ int runCLI() {
             args << trimmed.mid(4).trimmed();
             cli.handleCat(args);
         } else {
-            out << "[ERROR] Unknown command: " << trimmed << "\n";
-            out << "Type 'help' for available commands.\n";
+            out << "\033[1;31m[ERROR]\033[0m Unknown command: \033[33m" << trimmed << "\033[0m\n";
+            out << "Type '\033[33mhelp\033[0m' for available commands.\n";
         }
 
-        out << "\n" << fs.get_current_path() << " $ ";
+        out << "\n\033[34m" << fs.get_current_path() << "\033[0m \033[33m$\033[0m ";
         out.flush();
     }
 
@@ -145,6 +148,15 @@ int runCLI() {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    // Enable ANSI escape codes on Windows 10+
+    void* hOut = GetStdHandle(WIN_STD_OUTPUT_HANDLE);
+    unsigned long mode = 0;
+    GetConsoleMode(hOut, &mode);
+    SetConsoleMode(hOut, mode | WIN_ENABLE_VTP);
+#endif
     QCoreApplication::setApplicationName("Unix File System");
     QCoreApplication::setApplicationVersion("2.0");
 

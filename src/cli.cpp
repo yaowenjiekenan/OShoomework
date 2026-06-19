@@ -2,6 +2,24 @@
 #include "filesystem.h"
 #include <QTextStream>
 
+// ANSI Color Codes (soft palette)
+#define C_RESET   "\033[0m"
+#define C_BOLD    "\033[1m"
+#define C_DIM     "\033[2m"
+#define C_RED     "\033[31m"
+#define C_GREEN   "\033[32m"
+#define C_YELLOW  "\033[33m"
+#define C_BLUE    "\033[34m"
+#define C_MAGENTA "\033[35m"
+#define C_CYAN    "\033[36m"
+#define C_WHITE   "\033[37m"
+#define C_BRED    "\033[31m"
+#define C_BGREEN  "\033[32m"
+#define C_BYELLOW "\033[33m"
+#define C_BBLUE   "\033[34m"
+#define C_BCYAN   "\033[36m"
+#define C_GRAY    "\033[90m"
+
 CLI::CLI(FileSystem* fs, QObject* parent)
     : QObject(parent)
     , m_fileSystem(fs)
@@ -13,13 +31,13 @@ CLI::~CLI() {
 
 void CLI::printError(const QString& msg) {
     QTextStream out(stdout);
-    out << "[ERROR] " << msg << "\n";
+    out << C_BRED " [ERROR] " C_RESET C_RED << msg << C_RESET "\n";
     out.flush();
 }
 
 void CLI::printSuccess(const QString& msg) {
     QTextStream out(stdout);
-    out << "[OK] " << msg << "\n";
+    out << C_BGREEN " [OK] " C_RESET C_GREEN << msg << C_RESET "\n";
     out.flush();
 }
 
@@ -42,36 +60,34 @@ QString CLI::formatTime(time_t t) const {
 
 void CLI::printHelp() {
     QTextStream out(stdout);
-    out << "\nAvailable Commands:\n";
-    out << "-------------------\n";
-    out << "  createFile <path> <size(KB)>  Create a new file\n";
-    out << "  deleteFile <path>             Delete a file\n";
-    out << "  createDir <path>              Create a directory\n";
-    out << "  deleteDir [-r] <path>         Delete a directory (-r for recursive)\n";
-    out << "  changeDir <path>              Change current directory\n";
-    out << "  dir                           List directory contents\n";
-    out << "  cp <src> <dst>               Copy a file or directory\n";
-    out << "  mv <src> <dst>               Move/rename a file or directory\n";
-    out << "  cat <path>                    Display file contents\n";
-    out << "  chmod <path> <permissions>    Change file permissions (octal)\n";
-    out << "  sum                           Show storage usage\n";
-    out << "  clear                         Clear screen\n";
-    out << "  help                          Show this help message\n";
-    out << "  exit                          Exit program\n";
-    out << "\nShortcuts:\n";
-    out << "  cd = changeDir, ls/dir = dir\n";
-    out << "  mkdir = createDir, rm = deleteDir\n";
-    out << "  cp = copy, mv = move\n";
-    out << "  df = sum\n";
-    out << "\nExamples:\n";
-    out << "  createFile /dir1/myFile 10\n";
-    out << "  createDir /home/user/docs\n";
-    out << "  changeDir /home/user\n";
-    out << "  cp /file1 /backup/file1\n";
-    out << "  mv /oldname /newname\n";
-    out << "  deleteDir -r /tmp/junk\n";
-    out << "  chmod /myfile 644\n";
-    out << "  cat /etc/config.conf\n";
+    out << "\n";
+    out << C_BYELLOW " Available Commands" C_RESET "\n";
+    out << C_GRAY " -------------------" C_RESET "\n";
+    out << "  " C_BCYAN "createFile" C_RESET " <path> <size(KB)>  " C_GRAY "Create a new file" C_RESET "\n";
+    out << "  " C_BCYAN "deleteFile" C_RESET " <path>             " C_GRAY "Delete a file" C_RESET "\n";
+    out << "  " C_BCYAN "createDir" C_RESET "  <path>              " C_GRAY "Create a directory" C_RESET "\n";
+    out << "  " C_BCYAN "deleteDir" C_RESET "  [-r] <path>         " C_GRAY "Delete a directory (-r for recursive)" C_RESET "\n";
+    out << "  " C_BCYAN "changeDir" C_RESET "  <path>              " C_GRAY "Change current directory" C_RESET "\n";
+    out << "  " C_BCYAN "dir" C_RESET "                           " C_GRAY "List directory contents" C_RESET "\n";
+    out << "  " C_BCYAN "cp" C_RESET "  <src> <dst>               " C_GRAY "Copy a file or directory" C_RESET "\n";
+    out << "  " C_BCYAN "mv" C_RESET "  <src> <dst>               " C_GRAY "Move/rename a file or directory" C_RESET "\n";
+    out << "  " C_BCYAN "cat" C_RESET " <path>                    " C_GRAY "Display file contents" C_RESET "\n";
+    out << "  " C_BCYAN "chmod" C_RESET " <path> <permissions>    " C_GRAY "Change file permissions (octal)" C_RESET "\n";
+    out << "  " C_BCYAN "sum" C_RESET "                           " C_GRAY "Show storage usage" C_RESET "\n";
+    out << "  " C_BCYAN "clear" C_RESET "                         " C_GRAY "Clear screen" C_RESET "\n";
+    out << "  " C_BCYAN "help" C_RESET "                          " C_GRAY "Show this help message" C_RESET "\n";
+    out << "  " C_BCYAN "exit" C_RESET "                          " C_GRAY "Exit program" C_RESET "\n";
+    out << "\n" C_BYELLOW " Shortcuts" C_RESET "\n";
+    out << C_GRAY "  cd = changeDir, ls/dir = dir" C_RESET "\n";
+    out << C_GRAY "  mkdir = createDir, rm = deleteDir" C_RESET "\n";
+    out << C_GRAY "  cp = copy, mv = move, df = sum" C_RESET "\n";
+    out << "\n" C_BYELLOW " Examples" C_RESET "\n";
+    out << "  " C_GREEN "createFile /dir1/myFile 10" C_RESET "\n";
+    out << "  " C_GREEN "createDir /home/user/docs" C_RESET "\n";
+    out << "  " C_GREEN "changeDir /home/user" C_RESET "\n";
+    out << "  " C_GREEN "cp /file1 /backup/file1" C_RESET "\n";
+    out << "  " C_GREEN "chmod /myfile 644" C_RESET "\n";
+    out << "  " C_GREEN "cat /etc/config.conf" C_RESET "\n";
     out << "\n";
     out.flush();
 }
@@ -95,7 +111,7 @@ void CLI::handleCreateFile(const QStringList& args) {
     // Max size with double indirect: 10 + 256 + 65536 = 65802 blocks = 64.26 MB
     uint32_t maxSize = (DIRECT_BLOCKS + POINTERS_PER_BLOCK + POINTERS_PER_BLOCK * POINTERS_PER_BLOCK);
     if (size > maxSize) {
-        out << "[ERROR] File size exceeds maximum allowed size (" << maxSize << " KB = " << (maxSize/1024) << " MB).\n";
+        out << C_BRED " [ERROR] " C_RESET C_RED "File size exceeds maximum allowed size (" << maxSize << " KB = " << (maxSize/1024) << " MB)." C_RESET "\n";
         out.flush();
         return;
     }
@@ -196,14 +212,14 @@ void CLI::handleListDir(const QStringList& args) {
     auto entries = m_fileSystem->get_directory_entries(m_fileSystem->current_inode);
 
     if (entries.empty()) {
-        out << "\n  (empty directory)\n";
+        out << "\n  " C_GRAY "(empty directory)" C_RESET "\n";
         out.flush();
         return;
     }
 
     out << "\n";
-    out << QString("%1/\n").arg(m_fileSystem->get_current_path());
-    out << QString().leftJustified(60, '-') << "\n";
+    out << C_BBLUE << QString("%1/").arg(m_fileSystem->get_current_path()) << C_RESET "\n";
+    out << C_GRAY << QString().leftJustified(60, '-') << C_RESET "\n";
 
     int files = 0, dirs = 0;
 
@@ -212,37 +228,41 @@ void CLI::handleListDir(const QStringList& args) {
         if (name == "." || name == "..") continue;
 
         const INode& inode = m_fileSystem->inode_table[e.inode_id];
-        QString type = inode.file_type == FileType::DIRECTORY ? "DIR " : "FILE";
-        QString size = inode.file_type == FileType::DIRECTORY ? "     -" : formatSize(inode.file_size);
+        bool isDir = inode.file_type == FileType::DIRECTORY;
+        QString size = isDir ? "     -" : formatSize(inode.file_size);
         QString time = formatTime(inode.modified_time);
-        // Format permissions from actual inode value
+        // Format permissions with color
         QString perms;
-        perms += inode.file_type == FileType::DIRECTORY ? 'd' : '-';
-        perms += (inode.permissions & 0x0100) ? 'r' : '-';
-        perms += (inode.permissions & 0x0080) ? 'w' : '-';
-        perms += (inode.permissions & 0x0040) ? 'x' : '-';
-        perms += (inode.permissions & 0x0020) ? 'r' : '-';
-        perms += (inode.permissions & 0x0010) ? 'w' : '-';
-        perms += (inode.permissions & 0x0008) ? 'x' : '-';
-        perms += (inode.permissions & 0x0004) ? 'r' : '-';
-        perms += (inode.permissions & 0x0002) ? 'w' : '-';
-        perms += (inode.permissions & 0x0001) ? 'x' : '-';
+        perms += isDir ? C_BBLUE "d" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0100) ? C_GREEN "r" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0080) ? C_YELLOW "w" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0040) ? C_RED "x" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0020) ? C_GREEN "r" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0010) ? C_YELLOW "w" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0008) ? C_RED "x" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0004) ? C_GREEN "r" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0002) ? C_YELLOW "w" C_RESET : C_GRAY "-" C_RESET;
+        perms += (inode.permissions & 0x0001) ? C_RED "x" C_RESET : C_GRAY "-" C_RESET;
 
-        out << QString("  %1 %2 %3 %4\n")
-                   .arg(perms, 11)
-                   .arg(size, 10)
-                   .arg(time, 18)
-                   .arg(QString::fromStdString(name));
+        QString nameStr = QString::fromStdString(name);
+        QString coloredName = isDir
+            ? QString(C_BBLUE "%1/" C_RESET).arg(nameStr)
+            : QString(C_WHITE "%1" C_RESET).arg(nameStr);
 
-        if (inode.file_type == FileType::DIRECTORY) {
+        out << "  " << perms
+            << " " C_CYAN << QString("%1").arg(size, 10) << C_RESET
+            << " " C_GRAY << QString("%1").arg(time, 18) << C_RESET
+            << " " << coloredName << "\n";
+
+        if (isDir) {
             dirs++;
         } else {
             files++;
         }
     }
 
-    out << QString().leftJustified(60, '-') << "\n";
-    out << QString("  %1 file(s), %2 dir(s)\n").arg(files).arg(dirs);
+    out << C_GRAY << QString().leftJustified(60, '-') << C_RESET "\n";
+    out << "  " C_CYAN << files << " file(s)" C_RESET ", " C_BBLUE << dirs << " dir(s)" C_RESET "\n";
     out.flush();
 }
 
@@ -294,7 +314,7 @@ void CLI::handleChmod(const QStringList& args) {
 
     if (args.size() < 2) {
         printError("Usage: chmod <path> <permissions(octal)>");
-        out << "Examples: chmod /myfile 644, chmod /mydir 755\n";
+        out << C_GRAY "Examples: chmod /myfile 644, chmod /mydir 755" C_RESET "\n";
         out.flush();
         return;
     }
@@ -339,12 +359,12 @@ void CLI::handleCat(const QStringList& args) {
         return;
     }
 
-    out << "\n[File: " << path << "]\n";
-    out << "[Size: " << formatSize(fileInode.file_size) << "]\n";
-    out << "[Blocks: " << fileInode.block_count << "]\n";
-    out << "[Created: " << formatTime(fileInode.created_time) << "]\n";
-    out << "[Modified: " << formatTime(fileInode.modified_time) << "]\n";
-    out << QString().leftJustified(40, '-') << "\n\n";
+    out << "\n" C_BYELLOW "[File: " << path << "]" C_RESET "\n";
+    out << C_CYAN "[Size: " << formatSize(fileInode.file_size) << "]" C_RESET "\n";
+    out << C_CYAN "[Blocks: " << fileInode.block_count << "]" C_RESET "\n";
+    out << C_GRAY "[Created: " << formatTime(fileInode.created_time) << "]" C_RESET "\n";
+    out << C_GRAY "[Modified: " << formatTime(fileInode.modified_time) << "]" C_RESET "\n";
+    out << C_GRAY << QString().leftJustified(40, '-') << C_RESET "\n\n";
 
     // Read and display file content (first 4KB as preview)
     uint32_t displaySize = qMin(fileInode.file_size, (uint32_t)4096);
@@ -388,12 +408,12 @@ void CLI::handleCat(const QStringList& args) {
     }
 
     // Display content
-    out << "Content preview (first 4KB):\n\n";
-    out << content.left(1024).constData() << "\n";
+    out << C_BYELLOW "Content preview (first 4KB):" C_RESET "\n\n";
+    out << C_WHITE << content.left(1024).constData() << C_RESET "\n";
     out << "\n";
 
     if (fileInode.file_size > 4096) {
-        out << "... (file continues, " << formatSize(fileInode.file_size - 4096) << " more)\n";
+        out << C_GRAY "... (file continues, " << formatSize(fileInode.file_size - 4096) << " more)" C_RESET "\n";
     }
 
     out.flush();
@@ -410,31 +430,53 @@ void CLI::handleSum() {
     double freePercent = 100.0 * freeBlocks / totalBlocks;
 
     out << "\n";
-    out << "========================================\n";
-    out << "        Storage Usage Report\n";
-    out << "========================================\n";
-    out << "\n";
-    out << QString("  Total Space:     %1 MB (%2 blocks)\n")
+    out << C_BYELLOW "  ╔════════════════════════════════════════╗" C_RESET "\n";
+    out << C_BYELLOW "  ║       Storage Usage Report             ║" C_RESET "\n";
+    out << C_BYELLOW "  ╠════════════════════════════════════════╣" C_RESET "\n";
+    out << C_BYELLOW "  ║" C_RESET
+        << QString("  Total Space:   " C_BCYAN "%1 MB" C_RESET " (%2 blocks)")
                    .arg(TOTAL_SIZE / (1024.0 * 1024), 0, 'f', 2)
                    .arg(totalBlocks);
-    out << QString("  Block Size:     %1 bytes\n").arg(BLOCK_SIZE);
     out << "\n";
-    out << QString("  Used Blocks:    %1 (%2%)\n").arg(usedBlocks).arg(usedPercent, 0, 'f', 1);
-    out << QString("  Free Blocks:    %1 (%2%)\n").arg(freeBlocks).arg(freePercent, 0, 'f', 1);
+    out << C_BYELLOW "  ║" C_RESET
+        << QString("  Block Size:    " C_CYAN "%1 bytes" C_RESET).arg(BLOCK_SIZE);
     out << "\n";
+    out << C_BYELLOW "  ║" C_RESET "\n";
+    out << C_BYELLOW "  ║" C_RESET
+        << QString("  " C_RED "Used Blocks:" C_RESET "   " C_BRED "%1" C_RESET " (%2%)")
+                   .arg(usedBlocks).arg(usedPercent, 0, 'f', 1);
+    out << "\n";
+    out << C_BYELLOW "  ║" C_RESET
+        << QString("  " C_GREEN "Free Blocks:" C_RESET "   " C_BGREEN "%1" C_RESET " (%2%)")
+                   .arg(freeBlocks).arg(freePercent, 0, 'f', 1);
+    out << "\n";
+    out << C_BYELLOW "  ║" C_RESET "\n";
 
-    // Simple bar chart
-    int barWidth = 40;
+    // Colored bar chart
+    int barWidth = 36;
     int usedBars = (int)(usedPercent * barWidth / 100);
     int freeBars = barWidth - usedBars;
 
-    out << "  [";
-    for (int i = 0; i < usedBars; i++) out << "#";
-    for (int i = 0; i < freeBars; i++) out << "-";
-    out << "]\n";
+    out << C_BYELLOW "  ║" C_RESET "  [";
+    // Used portion in red/yellow gradient
+    for (int i = 0; i < usedBars; i++) {
+        if (usedPercent > 80) out << C_BRED;
+        else if (usedPercent > 50) out << C_BYELLOW;
+        else out << C_BGREEN;
+        out << "\xe2\x96\x88";  // Unicode full block character
+    }
+    // Free portion in dim
+    out << C_GRAY;
+    for (int i = 0; i < freeBars; i++) out << "\xe2\x96\x91";  // Unicode light shade
+    out << C_RESET "]";
     out << "\n";
-    out << "  Used: #  Free: -\n";
-    out << "\n";
-    out << "========================================\n";
+
+    out << C_BYELLOW "  ║" C_RESET "  ";
+    if (usedPercent > 80) out << C_BRED;
+    else if (usedPercent > 50) out << C_BYELLOW;
+    else out << C_BGREEN;
+    out << "\xe2\x96\x88" C_RESET " Used  ";
+    out << C_GRAY "\xe2\x96\x91" C_RESET " Free\n";
+    out << C_BYELLOW "  ╚════════════════════════════════════════╝" C_RESET "\n";
     out.flush();
 }
