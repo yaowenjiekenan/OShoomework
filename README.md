@@ -5,7 +5,7 @@
 ## 项目要求
 
 **课程**: Operating Systems, Module Practice
-**学期**: Spring 2026
+**学期**: Summer 2026
 **截止日期**: 2026/06/20 23:59
 
 ### 任务要求

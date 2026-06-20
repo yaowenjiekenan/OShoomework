@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'cli.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.11.1)
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -17,8 +17,8 @@
 #include <QtCore/qxptype_traits.h>
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'cli.h' doesn't include <QObject>."
-#elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.11.1. It"
+#elif Q_MOC_OUTPUT_REVISION != 68
+#error "This file was generated using the moc from 6.8.3. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -34,29 +34,41 @@ namespace {
 struct qt_meta_tag_ZN3CLIE_t {};
 } // unnamed namespace
 
-template <> constexpr inline auto CLI::qt_create_metaobjectdata<qt_meta_tag_ZN3CLIE_t>()
-{
-    namespace QMC = QtMocConstants;
-    QtMocHelpers::StringRefStorage qt_stringData {
-        "CLI"
-    };
 
-    QtMocHelpers::UintData qt_methods {
-    };
-    QtMocHelpers::UintData qt_properties {
-    };
-    QtMocHelpers::UintData qt_enums {
-    };
-    return QtMocHelpers::metaObjectData<CLI, qt_meta_tag_ZN3CLIE_t>(QMC::MetaObjectFlag{}, qt_stringData,
-            qt_methods, qt_properties, qt_enums);
-}
+#ifdef QT_MOC_HAS_STRINGDATA
+static constexpr auto qt_meta_stringdata_ZN3CLIE = QtMocHelpers::stringData(
+    "CLI"
+);
+#else  // !QT_MOC_HAS_STRINGDATA
+#error "qtmochelpers.h not found or too old."
+#endif // !QT_MOC_HAS_STRINGDATA
+
+Q_CONSTINIT static const uint qt_meta_data_ZN3CLIE[] = {
+
+ // content:
+      12,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       0,    0, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+       0        // eod
+};
+
 Q_CONSTINIT const QMetaObject CLI::staticMetaObject = { {
     QMetaObject::SuperData::link<QObject::staticMetaObject>(),
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN3CLIE_t>.stringdata,
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN3CLIE_t>.data,
+    qt_meta_stringdata_ZN3CLIE.offsetsAndSizes,
+    qt_meta_data_ZN3CLIE,
     qt_static_metacall,
     nullptr,
-    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN3CLIE_t>.metaTypes,
+    qt_incomplete_metaTypeArray<qt_meta_tag_ZN3CLIE_t,
+        // Q_OBJECT / Q_GADGET
+        QtPrivate::TypeAndForceComplete<CLI, std::true_type>
+    >,
     nullptr
 } };
 
@@ -77,7 +89,7 @@ const QMetaObject *CLI::metaObject() const
 void *CLI::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN3CLIE_t>.strings))
+    if (!strcmp(_clname, qt_meta_stringdata_ZN3CLIE.stringdata0))
         return static_cast<void*>(this);
     return QObject::qt_metacast(_clname);
 }
